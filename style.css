@@ -1,0 +1,261 @@
+/* ===== Design tokens ===== */
+/* Light theme (the default) */
+:root {
+  --color-page: #e9edf3;
+  --color-body: #f8fafc;
+  --color-text: #1e2530;
+  --color-muted: #6b7584;
+  --color-key: #ffffff;
+  --color-key-hover: #eef2f7;
+  --color-function: #dde3ec;
+  --color-function-hover: #cfd7e3;
+  --color-operator: #ff9f0a;
+  --color-operator-hover: #e68c00;
+  --color-on-accent: #ffffff;
+  --color-error: #d93025;
+  --shadow: 0 20px 50px rgba(30, 37, 48, 0.15);
+  --key-shadow: 0 2px 0 rgba(30, 37, 48, 0.12);
+
+  --radius: 28px;
+  --key-radius: 18px;
+  --gap: 0.75rem;
+
+  color-scheme: light;
+}
+
+/* Dark theme: the colours are swapped, everything else stays the same.
+   Two ways to get here:
+   1. The system is in dark mode and the user hasn't picked a theme
+   2. The user clicked 🌙 (data-theme="dark" on <html>) */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-page: #0b0d11;
+    --color-body: #171a21;
+    --color-text: #f1f3f6;
+    --color-muted: #8b93a1;
+    --color-key: #262a33;
+    --color-key-hover: #30353f;
+    --color-function: #3a3f4b;
+    --color-function-hover: #464c5a;
+    --color-error: #ff6b61;
+    --shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+    --key-shadow: 0 2px 0 rgba(0, 0, 0, 0.4);
+
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --color-page: #0b0d11;
+  --color-body: #171a21;
+  --color-text: #f1f3f6;
+  --color-muted: #8b93a1;
+  --color-key: #262a33;
+  --color-key-hover: #30353f;
+  --color-function: #3a3f4b;
+  --color-function-hover: #464c5a;
+  --color-error: #ff6b61;
+  --shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+  --key-shadow: 0 2px 0 rgba(0, 0, 0, 0.4);
+
+  color-scheme: dark;
+}
+
+/* ===== Reset ===== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body,
+h1,
+p {
+  margin: 0;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+/* ===== Page ===== */
+body {
+  min-height: 100vh;
+  display: grid;
+  place-items: center; /* centre the calculator both ways */
+  padding: 1rem;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--color-page);
+  color: var(--color-text);
+  transition: background-color 0.2s;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-operator);
+  outline-offset: 2px;
+}
+
+/* ===== Calculator body ===== */
+.calculator {
+  width: min(360px, 100%);
+  padding: 1.25rem;
+  border-radius: var(--radius);
+  background: var(--color-body);
+  box-shadow: var(--shadow);
+}
+
+.calculator__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.calculator__title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+.icon-btn {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  font-size: 1.15rem;
+}
+
+.icon-btn:hover {
+  background: var(--color-function);
+}
+
+/* ===== Display ===== */
+.display {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-end;
+  gap: 0.25rem;
+  min-height: 8.5rem;
+  padding: 1.5rem 0.25rem 1.25rem;
+  text-align: right;
+}
+
+.display__expression {
+  width: 100%;
+  font-size: 2.5rem;
+  font-weight: 300;
+  line-height: 1.15;
+  /* Numbers line up in columns, so the display doesn't wobble while typing */
+  font-variant-numeric: tabular-nums;
+  /* A long expression wraps onto a new line instead of overflowing */
+  overflow-wrap: anywhere;
+}
+
+/* Long expressions get smaller text (main.js adds these classes) */
+.display__expression--medium {
+  font-size: 1.9rem;
+}
+
+.display__expression--small {
+  font-size: 1.4rem;
+}
+
+.display__result {
+  min-height: 1.75rem;
+  font-size: 1.35rem;
+  color: var(--color-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.display__result--error {
+  color: var(--color-error);
+}
+
+/* ===== Keypad ===== */
+/* 4 equal columns. The buttons fill the cells in HTML order, row by row. */
+.keypad {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-auto-rows: 4rem;
+  gap: var(--gap);
+}
+
+.key {
+  border: none;
+  border-radius: var(--key-radius);
+  background: var(--color-key);
+  box-shadow: var(--key-shadow);
+  font-size: 1.5rem;
+  transition: background-color 0.1s, transform 0.05s;
+  /* Stop double-tap zoom on phones when tapping quickly */
+  touch-action: manipulation;
+  user-select: none;
+}
+
+.key:hover {
+  background: var(--color-key-hover);
+}
+
+/* :active while the mouse is down; .is-pressed when a keyboard key is pressed */
+.key:active,
+.key.is-pressed {
+  transform: translateY(2px);
+  box-shadow: none;
+}
+
+.key--function {
+  background: var(--color-function);
+  font-size: 1.25rem;
+}
+
+.key--function:hover {
+  background: var(--color-function-hover);
+}
+
+.key--operator,
+.key--equals {
+  background: var(--color-operator);
+  color: var(--color-on-accent);
+  font-size: 1.75rem;
+}
+
+.key--operator:hover,
+.key--equals:hover {
+  background: var(--color-operator-hover);
+}
+
+/* "=" is two rows tall and "0" is two columns wide. The other buttons
+   simply flow around them. */
+.key--equals {
+  grid-row: span 2;
+}
+
+.key--zero {
+  grid-column: span 2;
+  text-align: left;
+  padding-left: 1.6rem;
+}
+
+/* ===== Small phones ===== */
+@media (max-width: 360px) {
+  .calculator {
+    padding: 1rem;
+  }
+
+  .keypad {
+    grid-auto-rows: 3.5rem;
+    gap: 0.6rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body,
+  .key {
+    transition: none;
+  }
+}

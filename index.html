@@ -5,6 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Calculator</title>
   <link rel="stylesheet" href="style.css">
+  <!-- Runs before the page is drawn, so a saved dark theme doesn't flash
+       white first. Modules run later, which would be too late for this. -->
+  <script>
+    try {
+      const saved = localStorage.getItem("calculator:theme");
+      if (saved === "light" || saved === "dark") {
+        document.documentElement.dataset.theme = saved;
+      }
+    } catch {}
+  </script>
   <script type="module" src="js/main.js"></script>
 </head>
 <body>
