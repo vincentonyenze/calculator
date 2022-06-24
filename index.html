@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculator</title>
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="js/main.js"></script>
+</head>
+<body>
+  <main class="calculator" aria-label="Calculator">
+    <header class="calculator__header">
+      <h1 class="calculator__title">Calculator</h1>
+      <button type="button" id="theme-btn" class="icon-btn" aria-label="Switch to dark theme">🌙</button>
+    </header>
+
+    <!-- The screen: what you've typed, and the answer underneath -->
+    <section class="display" aria-label="Display">
+      <p id="expression" class="display__expression">0</p>
+      <!-- <output> is the HTML element meant for the result of a calculation.
+           aria-live makes screen readers read the answer when it changes. -->
+      <output id="result" class="display__result" aria-live="polite"></output>
+    </section>
+
+    <!-- The keypad. Each button says what it does with a data- attribute:
+         data-value  = a character to type ("7", "+", "(")
+         data-action = a command ("clear", "equals")
+         The maths uses * / - while the buttons show × ÷ −. -->
+    <div id="keypad" class="keypad">
+      <button type="button" class="key key--function" data-action="clear" aria-label="Clear all">AC</button>
+      <button type="button" class="key key--function" data-action="backspace" aria-label="Delete last">⌫</button>
+      <button type="button" class="key key--function" data-action="percent" aria-label="Percent">%</button>
+      <button type="button" class="key key--operator" data-value="/" aria-label="Divide">÷</button>
+
+      <button type="button" class="key key--function" data-value="(" aria-label="Open bracket">(</button>
+      <button type="button" class="key key--function" data-value=")" aria-label="Close bracket">)</button>
+      <button type="button" class="key key--function" data-action="negate" aria-label="Plus or minus">±</button>
+      <button type="button" class="key key--operator" data-value="*" aria-label="Multiply">×</button>
+
+      <button type="button" class="key" data-value="7">7</button>
+      <button type="button" class="key" data-value="8">8</button>
+      <button type="button" class="key" data-value="9">9</button>
+      <button type="button" class="key key--operator" data-value="-" aria-label="Minus">−</button>
+
+      <button type="button" class="key" data-value="4">4</button>
+      <button type="button" class="key" data-value="5">5</button>
+      <button type="button" class="key" data-value="6">6</button>
+      <button type="button" class="key key--operator" data-value="+" aria-label="Plus">+</button>
+
+      <button type="button" class="key" data-value="1">1</button>
+      <button type="button" class="key" data-value="2">2</button>
+      <button type="button" class="key" data-value="3">3</button>
+      <button type="button" class="key key--equals" data-action="equals" aria-label="Equals">=</button>
+
+      <button type="button" class="key key--zero" data-value="0">0</button>
+      <button type="button" class="key" data-value="." aria-label="Decimal point">.</button>
+    </div>
+  </main>
+</body>
+</html>
