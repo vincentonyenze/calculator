@@ -115,6 +115,77 @@ function appendCloseBracket(expression) {
   return `${expression})`;
 }
 
+// ===== Tokenizer =====
+// Step 1 of calculating: cut the text into meaningful pieces ("tokens").
+//   "12+3.5*(2-1)"
+//   -> 12, +, 3.5, *, (, 2, -, 1, )
+// Each token is an object: { type: "number", value: 12 },
+// { type: "operator", value: "+" }, or { type: "paren", value: "(" }.
+// After this step nobody has to look at single characters again.
+
+// Thrown for anything that isn't valid maths
+export class CalcError extends Error {
+  name = "CalcError";
+}
+
+// Is a "-" at this position a minus sign ("-5", "2*-3", "(-1") rather
+// than subtraction ("5-3")? Yes if nothing a number could be subtracted
+// from comes before it.
+function isNegativeSign(tokens) {
+  const previous = tokens.at(-1);
+  return (
+    previous === undefined ||
+    previous.type === "operator" ||
+    (previous.type === "paren" && previous.value === "(")
+  );
+}
+
+export function tokenize(expression) {
+  const tokens = [];
+  let i = 0;
+
+  while (i < expression.length) {
+    const char = expression[i];
+
+    // A number: read every digit and "." that follows, all at once
+    if (isDigit(char) || char === ".") {
+      const text = expression.slice(i).match(/^[\d.]+/)[0];
+      if (text === "." || text.split(".").length > 2) {
+        throw new CalcError(`"${text}" isn't a number`);
+      }
+      tokens.push({ type: "number", value: Number.parseFloat(text) });
+      i += text.length;
+      continue;
+    }
+
+    if (char === "-" && isNegativeSign(tokens)) {
+      const next = expression[i + 1];
+      if (isDigit(next) || next === ".") {
+        // "-5": read the number and make it negative
+        const text = expression.slice(i + 1).match(/^[\d.]+/)[0];
+        tokens.push({ type: "number", value: -Number.parseFloat(text) });
+        i += 1 + text.length;
+      } else {
+        // "-(2+3)" is the same as -1 × (2+3)
+        tokens.push({ type: "number", value: -1 }, { type: "operator", value: "*" });
+        i += 1;
+      }
+      continue;
+    }
+
+    if (isOperator(char)) {
+      tokens.push({ type: "operator", value: char });
+    } else if (char === "(" || char === ")") {
+      tokens.push({ type: "paren", value: char });
+    } else {
+      throw new CalcError(`Unexpected "${char}"`);
+    }
+    i += 1;
+  }
+
+  return tokens;
+}
+
 // ===== Deleting =====
 export function deleteLast(expression) {
   const shorter = expression.slice(0, -1);
