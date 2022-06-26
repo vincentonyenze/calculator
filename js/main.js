@@ -1,7 +1,7 @@
 // Entry point: the only script loaded by index.html.
 // It connects the page (buttons, keyboard, display) to the maths engine.
 import { setupThemeToggle } from "./theme.js";
-import { INITIAL, appendInput, deleteLast } from "./calculator.js";
+import { INITIAL, appendInput, deleteLast, calculate, CalcError } from "./calculator.js";
 
 const elements = {
   keypad: document.getElementById("keypad"),
@@ -16,6 +16,8 @@ const SMALL_TEXT_FROM = 20;
 
 const state = {
   expression: INITIAL,
+  result: "", // the text under the expression: "= 14", or an error message
+  isError: false,
 };
 
 // ===== Display =====
@@ -37,11 +39,28 @@ function render() {
     "display__expression--small",
     expression.length >= SMALL_TEXT_FROM
   );
+
+  elements.result.textContent = state.result;
+  elements.result.classList.toggle("display__result--error", state.isError);
+}
+
+// ===== Calculating =====
+function equals() {
+  try {
+    const value = calculate(state.expression);
+    state.result = `= ${toDisplay(String(value))}`;
+    state.isError = false;
+  } catch (error) {
+    // Invalid maths gets a friendly message; anything else is a bug in our code
+    if (!(error instanceof CalcError)) throw error;
+    state.result = error.message;
+    state.isError = true;
+  }
 }
 
 // ===== Input =====
-// Commands that aren't "type this character". percent, negate and equals
-// arrive in later steps.
+// Commands that aren't "type this character". percent and negate
+// arrive in a later step.
 const actions = {
   clear: () => INITIAL,
   backspace: deleteLast,
@@ -53,6 +72,17 @@ function handleKeypadClick(event) {
   if (!key) return;
 
   const { value, action } = key.dataset;
+
+  if (action === "equals") {
+    equals();
+    render();
+    return;
+  }
+
+  // Any other key: the old answer no longer matches what's on screen
+  state.result = "";
+  state.isError = false;
+
   if (value !== undefined) {
     state.expression = appendInput(state.expression, value);
   } else if (actions[action]) {

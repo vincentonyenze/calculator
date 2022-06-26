@@ -186,6 +186,108 @@ export function tokenize(expression) {
   return tokens;
 }
 
+// ===== Evaluator =====
+// Step 2 of calculating: work out what the tokens add up to, with the
+// right order of operations: brackets first, then × ÷, then + −.
+// So 2+3×4 is 14, not 20.
+//
+// We do it in two passes, using Edsger Dijkstra's "shunting-yard" algorithm:
+//   1. Reorder the tokens so each operator comes AFTER its two numbers:
+//        2 + 3 * 4   ->   2 3 4 * +
+//      This order is called Reverse Polish Notation (RPN). It needs no
+//      brackets and no precedence rules: they're built into the order.
+//   2. Read the RPN left to right with a stack. A number goes on the
+//      stack; an operator takes the top two off and puts the answer back.
+
+// Higher number = done first
+const PRECEDENCE = { "+": 1, "-": 1, "*": 2, "/": 2 };
+
+// Pass 1: tokens in normal order -> tokens in RPN order
+function toRPN(tokens) {
+  const output = [];
+  const waiting = []; // operators and "(" not placed yet (a stack)
+
+  for (const token of tokens) {
+    if (token.type === "number") {
+      output.push(token); // numbers go straight through
+    } else if (token.type === "operator") {
+      // Before this operator waits, place any waiting operator that should
+      // happen first: higher precedence, or equal (left to right: 8-3-2 = 3)
+      while (
+        waiting.length > 0 &&
+        waiting.at(-1).type === "operator" &&
+        PRECEDENCE[waiting.at(-1).value] >= PRECEDENCE[token.value]
+      ) {
+        output.push(waiting.pop());
+      }
+      waiting.push(token);
+    } else if (token.value === "(") {
+      waiting.push(token);
+    } else {
+      // ")": place everything back to the matching "(", then drop the pair
+      while (waiting.length > 0 && waiting.at(-1).value !== "(") {
+        output.push(waiting.pop());
+      }
+      if (waiting.length === 0) throw new CalcError("Too many closing brackets");
+      waiting.pop(); // the "("
+    }
+  }
+
+  // Place what's left. A "(" still here was never closed: like most
+  // calculators we close it for you, so "(2+3" means "(2+3)".
+  while (waiting.length > 0) {
+    const token = waiting.pop();
+    if (token.type === "operator") output.push(token);
+  }
+  return output;
+}
+
+function applyOperator(operator, a, b) {
+  switch (operator) {
+    case "+":
+      return a + b;
+    case "-":
+      return a - b;
+    case "*":
+      return a * b;
+    case "/":
+      if (b === 0) throw new CalcError("Can't divide by zero");
+      return a / b;
+  }
+}
+
+// Pass 2: RPN tokens -> one number
+function evaluateRPN(rpn) {
+  const stack = [];
+
+  for (const token of rpn) {
+    if (token.type === "number") {
+      stack.push(token.value);
+      continue;
+    }
+    if (stack.length < 2) throw new CalcError("Incomplete expression");
+    const b = stack.pop(); // the top is the RIGHT-hand number: 8 2 / is 8÷2
+    const a = stack.pop();
+    stack.push(applyOperator(token.value, a, b));
+  }
+
+  if (stack.length !== 1) throw new CalcError("Incomplete expression");
+  return stack[0];
+}
+
+// Ignore what's unfinished at the end, so "5+" or "5×(" count as "5".
+// Real calculators do the same when you press = too early.
+function trimIncomplete(expression) {
+  return expression.replace(/[-+*/(]+$/, "");
+}
+
+// The whole thing: "2+3*4" -> 14. Throws CalcError for invalid maths.
+export function calculate(expression) {
+  const complete = trimIncomplete(expression);
+  if (complete === "") throw new CalcError("Nothing to calculate");
+  return evaluateRPN(toRPN(tokenize(complete)));
+}
+
 // ===== Deleting =====
 export function deleteLast(expression) {
   const shorter = expression.slice(0, -1);
