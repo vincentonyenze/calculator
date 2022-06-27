@@ -1,0 +1,13 @@
+{
+  "name": "calculator",
+  "version": "1.0.0",
+  "description": "An expression calculator with operator precedence, brackets and keyboard support. No eval().",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "test:watch": "node --test --watch"
+  },
+  "author": "Vinco Dev",
+  "license": "MIT"
+}
