@@ -281,11 +281,38 @@ function trimIncomplete(expression) {
   return expression.replace(/[-+*/(]+$/, "");
 }
 
+// ===== Floating point =====
+// Computers store numbers in binary, and most decimals (like 0.1) can't be
+// written exactly in binary, just as 1/3 can't be written exactly in
+// decimal (0.3333…). So 0.1 + 0.2 = 0.30000000000000004.
+//
+// The error is always far out in the last few digits. Rounding the answer
+// to 12 significant digits removes it, and is still more precision than
+// any real calculator shows.
+const PRECISION = 12;
+
+function tidy(value) {
+  // Too big for JavaScript (over about 1.8 × 10^308) becomes Infinity,
+  // and Infinity - Infinity is NaN. Neither is an answer.
+  if (!Number.isFinite(value)) throw new CalcError("Number too large");
+
+  const rounded = Number(value.toPrecision(PRECISION));
+  // -0 exists in JavaScript (try -1 * 0). Nobody wants to see it.
+  return rounded === 0 ? 0 : rounded;
+}
+
 // The whole thing: "2+3*4" -> 14. Throws CalcError for invalid maths.
 export function calculate(expression) {
   const complete = trimIncomplete(expression);
   if (complete === "") throw new CalcError("Nothing to calculate");
-  return evaluateRPN(toRPN(tokenize(complete)));
+  return tidy(evaluateRPN(toRPN(tokenize(complete))));
+}
+
+// A number written so it can be typed back into an expression: no
+// "1e+21" (we have no "e" key) and no thousands commas.
+// 0.0000001 stays 0.0000001, 1e21 becomes "1000000000000000000000".
+export function toExpression(value) {
+  return value.toLocaleString("en-US", { useGrouping: false, maximumFractionDigits: 20 });
 }
 
 // ===== Deleting =====

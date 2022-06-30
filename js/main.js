@@ -2,6 +2,7 @@
 // It connects the page (buttons, keyboard, display) to the maths engine.
 import { setupThemeToggle } from "./theme.js";
 import { INITIAL, appendInput, deleteLast, calculate, CalcError } from "./calculator.js";
+import { formatResult, groupDigits } from "./format.js";
 
 const elements = {
   keypad: document.getElementById("keypad"),
@@ -29,15 +30,16 @@ function toDisplay(expression) {
 }
 
 function render() {
-  const { expression } = state;
-  elements.expression.textContent = toDisplay(expression);
+  // "1234*-5" -> "1,234×−5"
+  const text = toDisplay(groupDigits(state.expression));
+  elements.expression.textContent = text;
   elements.expression.classList.toggle(
     "display__expression--medium",
-    expression.length >= MEDIUM_TEXT_FROM && expression.length < SMALL_TEXT_FROM
+    text.length >= MEDIUM_TEXT_FROM && text.length < SMALL_TEXT_FROM
   );
   elements.expression.classList.toggle(
     "display__expression--small",
-    expression.length >= SMALL_TEXT_FROM
+    text.length >= SMALL_TEXT_FROM
   );
 
   elements.result.textContent = state.result;
@@ -48,7 +50,7 @@ function render() {
 function equals() {
   try {
     const value = calculate(state.expression);
-    state.result = `= ${toDisplay(String(value))}`;
+    state.result = `= ${toDisplay(formatResult(value))}`;
     state.isError = false;
   } catch (error) {
     // Invalid maths gets a friendly message; anything else is a bug in our code

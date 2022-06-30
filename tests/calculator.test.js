@@ -11,6 +11,7 @@ import {
   deleteLast,
   tokenize,
   calculate,
+  toExpression,
   CalcError,
 } from "../js/calculator.js";
 
@@ -142,5 +143,45 @@ describe("calculate", () => {
 
   test("has nothing to calculate for an empty bracket", () => {
     assert.throws(() => calculate("("), CalcError);
+  });
+});
+
+describe("floating point", () => {
+  test("0.1 + 0.2 is exactly 0.3", () => {
+    assert.equal(calculate("0.1+0.2"), 0.3);
+  });
+
+  test("1 ÷ 3 × 3 is exactly 1", () => {
+    assert.equal(calculate("1/3*3"), 1);
+  });
+
+  test("1.1 × 3 is exactly 3.3", () => {
+    assert.equal(calculate("1.1*3"), 3.3);
+  });
+
+  test("keeps 12 significant digits", () => {
+    assert.equal(calculate("2/3"), 0.666666666667);
+  });
+
+  test("never answers -0", () => {
+    assert.ok(Object.is(calculate("-1*0"), 0));
+  });
+
+  test("refuses numbers too large for JavaScript", () => {
+    assert.throws(() => calculate("9".repeat(400)), { message: "Number too large" });
+  });
+});
+
+describe("toExpression", () => {
+  test("writes small numbers without an e", () => {
+    assert.equal(toExpression(0.0000001), "0.0000001");
+  });
+
+  test("writes large numbers without an e or commas", () => {
+    assert.equal(toExpression(1e21), "1000000000000000000000");
+  });
+
+  test("keeps negative numbers", () => {
+    assert.equal(toExpression(-2.5), "-2.5");
   });
 });
