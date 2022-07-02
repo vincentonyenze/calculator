@@ -27,10 +27,13 @@
     <!-- The screen: what you've typed, and the answer underneath -->
     <section class="display" aria-label="Display">
       <p id="expression" class="display__expression">0</p>
-      <!-- <output> is the HTML element meant for the result of a calculation.
-           aria-live makes screen readers read the answer when it changes. -->
-      <output id="result" class="display__result" aria-live="polite"></output>
+      <!-- <output> is the HTML element meant for the result of a calculation -->
+      <output id="result" class="display__result"></output>
     </section>
+
+    <!-- Screen readers read this out when it changes. It's separate from the
+         display so they hear the answer on "=", not a preview on every key. -->
+    <p id="announcer" class="visually-hidden" aria-live="polite"></p>
 
     <!-- The keypad. Each button says what it does with a data- attribute:
          data-value  = a character to type ("7", "+", "(")

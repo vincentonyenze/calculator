@@ -92,6 +92,16 @@ body {
   transition: background-color 0.2s;
 }
 
+/* Hidden on screen, still read by screen readers */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
 :focus-visible {
   outline: 3px solid var(--color-operator);
   outline-offset: 2px;
@@ -176,6 +186,18 @@ body {
   color: var(--color-error);
 }
 
+/* After "=", the answer slides up into the main line */
+.display--answered .display__expression {
+  animation: answer-in 0.2s ease-out;
+}
+
+@keyframes answer-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+}
+
 /* ===== Keypad ===== */
 /* 4 equal columns. The buttons fill the cells in HTML order, row by row. */
 .keypad {
@@ -257,5 +279,9 @@ body {
   body,
   .key {
     transition: none;
+  }
+
+  .display--answered .display__expression {
+    animation: none;
   }
 }

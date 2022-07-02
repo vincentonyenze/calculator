@@ -11,6 +11,7 @@ import {
   deleteLast,
   tokenize,
   calculate,
+  preview,
   toExpression,
   CalcError,
 } from "../js/calculator.js";
@@ -169,6 +170,28 @@ describe("floating point", () => {
 
   test("refuses numbers too large for JavaScript", () => {
     assert.throws(() => calculate("9".repeat(400)), { message: "Number too large" });
+  });
+});
+
+describe("preview", () => {
+  test("shows the answer while typing", () => {
+    assert.equal(preview("2+3*4"), 14);
+  });
+
+  test("ignores an unfinished end", () => {
+    assert.equal(preview("2+3*"), 5);
+  });
+
+  test("shows nothing for a lone number", () => {
+    assert.equal(preview("12"), null);
+  });
+
+  test("shows nothing for a lone negative number", () => {
+    assert.equal(preview("-12"), null);
+  });
+
+  test("shows nothing instead of an error", () => {
+    assert.equal(preview("5/0"), null);
   });
 });
 

@@ -308,6 +308,19 @@ export function calculate(expression) {
   return tidy(evaluateRPN(toRPN(tokenize(complete))));
 }
 
+// The answer to show while typing, or null when there's nothing worth
+// showing: a lone number ("12" = 12 isn't news) or maths that doesn't
+// work yet ("5÷0" might become "5÷0.5").
+export function preview(expression) {
+  try {
+    if (tokenize(trimIncomplete(expression)).length < 2) return null;
+    return calculate(expression);
+  } catch (error) {
+    if (error instanceof CalcError) return null;
+    throw error;
+  }
+}
+
 // A number written so it can be typed back into an expression: no
 // "1e+21" (we have no "e" key) and no thousands commas.
 // 0.0000001 stays 0.0000001, 1e21 becomes "1000000000000000000000".
