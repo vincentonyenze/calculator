@@ -11,6 +11,10 @@ import {
   CalcError,
 } from "./calculator.js";
 import { formatResult, groupDigits } from "./format.js";
+import { keyFromKeyboard, cleanPastedText } from "./keyboard.js";
+
+// How long a button looks pressed when its keyboard key is used
+const PRESS_FLASH_MS = 120;
 
 const elements = {
   keypad: document.getElementById("keypad"),
@@ -145,7 +149,61 @@ function handleKeypadClick(event) {
   press(key.dataset);
 }
 
+// ===== Keyboard =====
+// The on-screen button for a key, so it can look pressed
+function findButton({ value, action }) {
+  const selector = value !== undefined
+    ? `[data-value="${CSS.escape(value)}"]`
+    : `[data-action="${CSS.escape(action)}"]`;
+  return elements.keypad.querySelector(selector);
+}
+
+function flashButton(button) {
+  if (!button) return;
+  button.classList.add("is-pressed");
+  // A timer rather than keyup: keyup can be missed (e.g. if you switch
+  // windows while holding a key), and the button would stay pressed
+  clearTimeout(button.pressTimer);
+  button.pressTimer = setTimeout(() => button.classList.remove("is-pressed"), PRESS_FLASH_MS);
+}
+
+function handleKeydown(event) {
+  // Leave Ctrl+C, Ctrl+R, Alt+Tab and friends to the browser
+  if (event.ctrlKey || event.metaKey || event.altKey) return;
+
+  const key = keyFromKeyboard(event.key);
+  if (!key) return;
+
+  // Without this, Enter would ALSO click whichever button has focus,
+  // and "/" opens Quick Find in Firefox
+  event.preventDefault();
+  press(key);
+  flashButton(findButton(key));
+}
+
+// ===== Copy and paste =====
+// Ctrl+C with nothing selected copies the expression (or the answer)
+// as plain maths: "1234*-5", not "1,234×−5"
+function handleCopy(event) {
+  if (String(window.getSelection())) return; // copy the selection as usual
+  event.preventDefault();
+  event.clipboardData.setData("text/plain", state.expression);
+}
+
+// Ctrl+V types the pasted text in, one character at a time, through the
+// same rules as the buttons. Bad characters are simply ignored.
+function handlePaste(event) {
+  event.preventDefault();
+  const text = cleanPastedText(event.clipboardData.getData("text/plain"));
+  for (const char of text) {
+    press({ value: char });
+  }
+}
+
 // ===== Init =====
 elements.keypad.addEventListener("click", handleKeypadClick);
+document.addEventListener("keydown", handleKeydown);
+document.addEventListener("copy", handleCopy);
+document.addEventListener("paste", handlePaste);
 setupThemeToggle(elements.themeBtn);
 render();
