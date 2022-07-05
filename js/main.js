@@ -8,6 +8,8 @@ import {
   calculate,
   preview,
   toExpression,
+  negate,
+  percent,
   CalcError,
 } from "./calculator.js";
 import { formatResult, groupDigits } from "./format.js";
@@ -111,11 +113,14 @@ function startsNewSum(value) {
 }
 
 // ===== Input =====
-// Commands that aren't "type this character". percent and negate
-// arrive in a later step.
+// Commands that aren't "type this character". Each takes the expression
+// and returns the new one. After an answer they work on the answer:
+// 24 then ± gives -24.
 const actions = {
   clear: () => INITIAL,
   backspace: deleteLast,
+  negate,
+  percent,
 };
 
 // Everything a key can do, whether it was clicked or (soon) typed.
@@ -136,8 +141,6 @@ function press({ value, action }) {
     state.expression = appendInput(start, value);
   } else if (actions[action]) {
     state.expression = actions[action](state.expression);
-  } else {
-    console.info(`"${action}" isn't built yet.`);
   }
   render();
 }

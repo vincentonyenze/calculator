@@ -13,6 +13,8 @@ import {
   calculate,
   preview,
   toExpression,
+  negate,
+  percent,
   CalcError,
 } from "../js/calculator.js";
 
@@ -206,5 +208,62 @@ describe("toExpression", () => {
 
   test("keeps negative numbers", () => {
     assert.equal(toExpression(-2.5), "-2.5");
+  });
+});
+
+describe("± (negate)", () => {
+  // [before, after, what happens]
+  const cases = [
+    ["12", "-12", "makes a number negative"],
+    ["-12", "12", "makes a negative number positive"],
+    ["5*3", "5*-3", "flips only the last number"],
+    ["5*-3", "5*3", "flips it back"],
+    ["5+3", "5-3", "turns + into −"],
+    ["5-3", "5+3", "turns − into +"],
+    ["(-3", "(3", "works straight after ("],
+    ["2*(3+4)", "2*-(3+4)", "flips a whole bracket"],
+    ["5*", "5*-", "starts a negative number after an operator"],
+    ["5*-", "5*", "removes that minus sign again"],
+  ];
+
+  for (const [before, after, what] of cases) {
+    test(`${what}: ${before} -> ${after}`, () => {
+      assert.equal(negate(before), after);
+    });
+  }
+
+  test("pressing ± twice changes nothing", () => {
+    for (const expression of ["12", "5*3", "5+3", "2*(3+4)"]) {
+      assert.equal(negate(negate(expression)), expression);
+    }
+  });
+
+  test("never changes the answer except for the sign", () => {
+    assert.equal(calculate(negate("10-3")), calculate("10+3"));
+  });
+});
+
+describe("% (percent)", () => {
+  const cases = [
+    ["50", "0.5", "on its own it divides by 100"],
+    ["200+10", "200+20", "after + it's a percent of what came before"],
+    ["80-25", "80-20", "after − too"],
+    ["100+100+10", "100+100+20", "the base is everything before the +"],
+    ["200*10", "200*0.1", "after × it divides by 100"],
+    ["-50", "-0.5", "a minus sign isn't subtraction"],
+    ["(5+5)", "0.1", "works on a whole bracket"],
+    ["200+(-10)", "200+(-20)", "keeps negative results in brackets"],
+    ["5+", "5+", "does nothing without a number"],
+    ["10/0+5", "10/0+5", "does nothing if the base can't be calculated"],
+  ];
+
+  for (const [before, after, what] of cases) {
+    test(`${what}: ${before} -> ${after}`, () => {
+      assert.equal(percent(before), after);
+    });
+  }
+
+  test("adding 15% to 80 gives 92", () => {
+    assert.equal(calculate(percent("80+15")), 92);
   });
 });

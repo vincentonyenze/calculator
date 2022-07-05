@@ -333,3 +333,92 @@ export function deleteLast(expression) {
   const shorter = expression.slice(0, -1);
   return shorter === "" ? INITIAL : shorter;
 }
+
+// ===== The last operand =====
+// ± and % change the LAST thing you typed: a number ("12+3.5" -> "3.5")
+// or a whole bracket ("2*(3+4)" -> "(3+4)"). This splits it off:
+//   "12+3.5"  -> { before: "12+", operand: "3.5" }
+//   "2*(3+4)" -> { before: "2*",  operand: "(3+4)" }
+// Returns null if the expression doesn't end with one ("5+").
+function splitLastOperand(expression) {
+  if (expression.endsWith(")")) {
+    // Walk back to the "(" that matches the final ")"
+    let depth = 0;
+    for (let i = expression.length - 1; i >= 0; i--) {
+      if (expression[i] === ")") depth++;
+      if (expression[i] === "(") depth--;
+      if (depth === 0) {
+        return { before: expression.slice(0, i), operand: expression.slice(i) };
+      }
+    }
+    return null;
+  }
+
+  const number = currentNumber(expression);
+  if (number === "") return null;
+  return { before: expression.slice(0, -number.length), operand: number };
+}
+
+// Is the "-" at the end of `before` a minus SIGN (belongs to the number
+// after it) rather than subtraction? The same question the tokenizer asks.
+function endsWithNegativeSign(before) {
+  if (!before.endsWith("-")) return false;
+  const previous = before.at(-2);
+  return previous === undefined || isOperator(previous) || previous === "(";
+}
+
+// ===== ± =====
+// Flip the sign of the last number or bracket:
+//   "12"     -> "-12"        "-12"    -> "12"
+//   "5*3"    -> "5*-3"       "5*-3"   -> "5*3"
+//   "5+3"    -> "5-3"        "5-3"    -> "5+3"   (5 + -3 is just 5 - 3)
+//   "2*(3+4)" -> "2*-(3+4)"
+export function negate(expression) {
+  const parts = splitLastOperand(expression);
+
+  // Nothing to flip yet ("5*"): start a negative number instead
+  if (!parts) {
+    return endsWithNegativeSign(expression)
+      ? expression.slice(0, -1)
+      : appendInput(expression, "-");
+  }
+
+  const { before, operand } = parts;
+  if (endsWithNegativeSign(before)) return before.slice(0, -1) + operand;
+  if (before.endsWith("-")) return `${before.slice(0, -1)}+${operand}`;
+  if (before.endsWith("+")) return `${before.slice(0, -1)}-${operand}`;
+  return `${before}-${operand}`;
+}
+
+// ===== % =====
+// Turn the last number into a percentage, the way shop and phone
+// calculators do:
+//   after + or −, it's a percent OF what came before:
+//     "200+10%" -> "200+20"   (add 10%)
+//     "80-25%"  -> "80-20"    (take off 25%)
+//   anywhere else it just means ÷ 100:
+//     "50%"     -> "0.5"
+//     "200*10%" -> "200*0.1"
+export function percent(expression) {
+  const parts = splitLastOperand(expression);
+  if (!parts) return expression;
+
+  const { before, operand } = parts;
+  try {
+    const value = calculate(operand);
+    const sign = before.at(-1);
+    const isAddOrSubtract = (sign === "+" || sign === "-") && !endsWithNegativeSign(before);
+
+    const result = isAddOrSubtract
+      ? (calculate(before.slice(0, -1)) * value) / 100
+      : value / 100;
+
+    // A negative result after something else gets brackets: "5+(-1)",
+    // not "5+-1", which you could never type yourself
+    const text = toExpression(tidy(result));
+    return result < 0 && before !== "" ? `${before}(${text})` : before + text;
+  } catch (error) {
+    if (error instanceof CalcError) return expression;
+    throw error;
+  }
+}
