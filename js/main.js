@@ -14,6 +14,7 @@ import {
 } from "./calculator.js";
 import { formatResult, groupDigits } from "./format.js";
 import { keyFromKeyboard, cleanPastedText } from "./keyboard.js";
+import { addEntry, loadHistory, saveHistory } from "./history.js";
 
 // How long a button looks pressed when its keyboard key is used
 const PRESS_FLASH_MS = 120;
@@ -25,6 +26,12 @@ const elements = {
   result: document.getElementById("result"),
   announcer: document.getElementById("announcer"),
   themeBtn: document.getElementById("theme-btn"),
+  historyBtn: document.getElementById("history-btn"),
+  history: document.getElementById("history"),
+  historyTitle: document.getElementById("history-title"),
+  historyList: document.getElementById("history-list"),
+  historyEmpty: document.getElementById("history-empty"),
+  historyClear: document.getElementById("history-clear"),
 };
 
 // Expressions longer than these get a smaller font, so they stay readable
@@ -37,6 +44,8 @@ const state = {
   // while the answer takes the main line. null while typing.
   answeredFrom: null,
   error: "", // e.g. "Can't divide by zero", or "" when there's no error
+  history: loadHistory(), // past calculations, newest first
+  isHistoryOpen: false,
 };
 
 // ===== Display =====
@@ -94,6 +103,14 @@ function equals() {
 
   try {
     const value = calculate(state.expression);
+    state.history = addEntry(state.history, {
+      expression: state.expression,
+      result: value,
+      at: Date.now(),
+    });
+    saveHistory(state.history);
+    renderHistory();
+
     state.answeredFrom = state.expression;
     // The answer becomes the expression, so you can carry on from it
     state.expression = toExpression(value);
@@ -123,7 +140,7 @@ const actions = {
   percent,
 };
 
-// Everything a key can do, whether it was clicked or (soon) typed.
+// Everything a key can do, whether it was clicked, typed or pasted.
 // key: { value: "7" } or { action: "equals" }
 function press({ value, action }) {
   if (action === "equals") {
@@ -152,6 +169,69 @@ function handleKeypadClick(event) {
   press(key.dataset);
 }
 
+// ===== History =====
+function createHistoryEntry(entry, index) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "history__entry";
+  button.dataset.index = index;
+
+  const expression = document.createElement("span");
+  expression.className = "history__expression";
+  expression.textContent = `${formatExpression(entry.expression)} =`;
+
+  const result = document.createElement("span");
+  result.className = "history__result";
+  result.textContent = toDisplay(formatResult(entry.result));
+
+  button.append(expression, result);
+
+  const item = document.createElement("li");
+  item.append(button);
+  return item;
+}
+
+function renderHistory() {
+  elements.historyList.replaceChildren(...state.history.map(createHistoryEntry));
+  elements.historyEmpty.hidden = state.history.length > 0;
+  elements.historyClear.hidden = state.history.length === 0;
+}
+
+function setHistoryOpen(isOpen) {
+  state.isHistoryOpen = isOpen;
+  elements.history.hidden = !isOpen;
+  elements.historyBtn.setAttribute("aria-expanded", String(isOpen));
+  // inert: the keypad underneath can't be clicked or reached with Tab
+  // while the panel covers it
+  elements.keypad.inert = isOpen;
+
+  // Move focus into the panel, and back to the 🕘 button afterwards, so
+  // keyboard users aren't left on a button that's now hidden
+  if (isOpen) elements.historyTitle.focus();
+  else elements.historyBtn.focus();
+}
+
+// Click an entry: put that sum back on the display to use or change
+function handleHistoryClick(event) {
+  const button = event.target.closest(".history__entry");
+  if (!button) return;
+
+  const entry = state.history[Number(button.dataset.index)];
+  state.expression = entry.expression;
+  state.answeredFrom = null;
+  state.error = "";
+  setHistoryOpen(false);
+  render();
+}
+
+function handleHistoryClear() {
+  state.history = [];
+  saveHistory(state.history);
+  renderHistory();
+  elements.historyTitle.focus(); // the Clear button just disappeared
+  announce("History cleared");
+}
+
 // ===== Keyboard =====
 // The on-screen button for a key, so it can look pressed
 function findButton({ value, action }) {
@@ -173,6 +253,13 @@ function flashButton(button) {
 function handleKeydown(event) {
   // Leave Ctrl+C, Ctrl+R, Alt+Tab and friends to the browser
   if (event.ctrlKey || event.metaKey || event.altKey) return;
+
+  // While the history is open, keys work as normal on its buttons
+  // (Enter picks an entry). Esc closes it rather than clearing the sum.
+  if (state.isHistoryOpen) {
+    if (event.key === "Escape") setHistoryOpen(false);
+    return;
+  }
 
   const key = keyFromKeyboard(event.key);
   if (!key) return;
@@ -208,5 +295,9 @@ elements.keypad.addEventListener("click", handleKeypadClick);
 document.addEventListener("keydown", handleKeydown);
 document.addEventListener("copy", handleCopy);
 document.addEventListener("paste", handlePaste);
+elements.historyBtn.addEventListener("click", () => setHistoryOpen(!state.isHistoryOpen));
+elements.historyList.addEventListener("click", handleHistoryClick);
+elements.historyClear.addEventListener("click", handleHistoryClear);
 setupThemeToggle(elements.themeBtn);
 render();
+renderHistory();

@@ -21,7 +21,12 @@
   <main class="calculator" aria-label="Calculator">
     <header class="calculator__header">
       <h1 class="calculator__title">Calculator</h1>
-      <button type="button" id="theme-btn" class="icon-btn" aria-label="Switch to dark theme">🌙</button>
+      <div class="calculator__tools">
+        <!-- aria-expanded tells screen readers whether the panel it controls is open -->
+        <button type="button" id="history-btn" class="icon-btn" aria-label="History"
+                aria-expanded="false" aria-controls="history" title="History">🕘</button>
+        <button type="button" id="theme-btn" class="icon-btn" aria-label="Switch to dark theme">🌙</button>
+      </div>
     </header>
 
     <!-- The screen: what you've typed, and the answer underneath -->
@@ -39,34 +44,48 @@
          data-value  = a character to type ("7", "+", "(")
          data-action = a command ("clear", "equals")
          The maths uses * / - while the buttons show × ÷ −. -->
-    <div id="keypad" class="keypad">
-      <button type="button" class="key key--function" data-action="clear" aria-label="Clear all" aria-keyshortcuts="Escape" title="Clear all (Esc)">AC</button>
-      <button type="button" class="key key--function" data-action="backspace" aria-label="Delete last" aria-keyshortcuts="Backspace" title="Delete last (Backspace)">⌫</button>
-      <button type="button" class="key key--function" data-action="percent" aria-label="Percent" aria-keyshortcuts="%" title="Percent (%)">%</button>
-      <button type="button" class="key key--operator" data-value="/" aria-label="Divide" aria-keyshortcuts="/" title="Divide (/)">÷</button>
+    <!-- The keypad and the history panel share this space: the panel
+         slides over the keypad, so the display stays visible above it -->
+    <div class="pad">
+      <div id="keypad" class="keypad">
+        <button type="button" class="key key--function" data-action="clear" aria-label="Clear all" aria-keyshortcuts="Escape" title="Clear all (Esc)">AC</button>
+        <button type="button" class="key key--function" data-action="backspace" aria-label="Delete last" aria-keyshortcuts="Backspace" title="Delete last (Backspace)">⌫</button>
+        <button type="button" class="key key--function" data-action="percent" aria-label="Percent" aria-keyshortcuts="%" title="Percent (%)">%</button>
+        <button type="button" class="key key--operator" data-value="/" aria-label="Divide" aria-keyshortcuts="/" title="Divide (/)">÷</button>
 
-      <button type="button" class="key key--function" data-value="(" aria-label="Open bracket">(</button>
-      <button type="button" class="key key--function" data-value=")" aria-label="Close bracket">)</button>
-      <button type="button" class="key key--function" data-action="negate" aria-label="Plus or minus" aria-keyshortcuts="F9" title="Plus or minus (F9)">±</button>
-      <button type="button" class="key key--operator" data-value="*" aria-label="Multiply" aria-keyshortcuts="*" title="Multiply (* or x)">×</button>
+        <button type="button" class="key key--function" data-value="(" aria-label="Open bracket">(</button>
+        <button type="button" class="key key--function" data-value=")" aria-label="Close bracket">)</button>
+        <button type="button" class="key key--function" data-action="negate" aria-label="Plus or minus" aria-keyshortcuts="F9" title="Plus or minus (F9)">±</button>
+        <button type="button" class="key key--operator" data-value="*" aria-label="Multiply" aria-keyshortcuts="*" title="Multiply (* or x)">×</button>
 
-      <button type="button" class="key" data-value="7">7</button>
-      <button type="button" class="key" data-value="8">8</button>
-      <button type="button" class="key" data-value="9">9</button>
-      <button type="button" class="key key--operator" data-value="-" aria-label="Minus">−</button>
+        <button type="button" class="key" data-value="7">7</button>
+        <button type="button" class="key" data-value="8">8</button>
+        <button type="button" class="key" data-value="9">9</button>
+        <button type="button" class="key key--operator" data-value="-" aria-label="Minus">−</button>
 
-      <button type="button" class="key" data-value="4">4</button>
-      <button type="button" class="key" data-value="5">5</button>
-      <button type="button" class="key" data-value="6">6</button>
-      <button type="button" class="key key--operator" data-value="+" aria-label="Plus">+</button>
+        <button type="button" class="key" data-value="4">4</button>
+        <button type="button" class="key" data-value="5">5</button>
+        <button type="button" class="key" data-value="6">6</button>
+        <button type="button" class="key key--operator" data-value="+" aria-label="Plus">+</button>
 
-      <button type="button" class="key" data-value="1">1</button>
-      <button type="button" class="key" data-value="2">2</button>
-      <button type="button" class="key" data-value="3">3</button>
-      <button type="button" class="key key--equals" data-action="equals" aria-label="Equals" aria-keyshortcuts="Enter =" title="Equals (Enter)">=</button>
+        <button type="button" class="key" data-value="1">1</button>
+        <button type="button" class="key" data-value="2">2</button>
+        <button type="button" class="key" data-value="3">3</button>
+        <button type="button" class="key key--equals" data-action="equals" aria-label="Equals" aria-keyshortcuts="Enter =" title="Equals (Enter)">=</button>
 
-      <button type="button" class="key key--zero" data-value="0">0</button>
-      <button type="button" class="key" data-value="." aria-label="Decimal point">.</button>
+        <button type="button" class="key key--zero" data-value="0">0</button>
+        <button type="button" class="key" data-value="." aria-label="Decimal point">.</button>
+      </div>
+
+      <section id="history" class="history" aria-labelledby="history-title" hidden>
+        <header class="history__header">
+          <h2 id="history-title" class="history__title" tabindex="-1">History</h2>
+          <button type="button" id="history-clear" class="history__clear">Clear</button>
+        </header>
+        <!-- Each entry is a button: click it to put that sum back on the display -->
+        <ul id="history-list" class="history__list"></ul>
+        <p id="history-empty" class="history__empty">No calculations yet.</p>
+      </section>
     </div>
   </main>
 </body>

@@ -128,6 +128,11 @@ body {
   color: var(--color-muted);
 }
 
+.calculator__tools {
+  display: flex;
+  gap: 0.25rem;
+}
+
 .icon-btn {
   display: grid;
   place-items: center;
@@ -139,7 +144,8 @@ body {
   font-size: 1.15rem;
 }
 
-.icon-btn:hover {
+.icon-btn:hover,
+.icon-btn[aria-expanded="true"] {
   background: var(--color-function);
 }
 
@@ -263,6 +269,99 @@ body {
   padding-left: 1.6rem;
 }
 
+/* ===== History panel ===== */
+/* The panel is placed exactly over the keypad: same box, on top */
+.pad {
+  position: relative;
+}
+
+.history {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--key-radius);
+  background: var(--color-body);
+  animation: history-in 0.2s ease-out;
+}
+
+@keyframes history-in {
+  from {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+}
+
+.history__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.25rem 0.25rem 0.75rem;
+  border-bottom: 1px solid var(--color-function);
+}
+
+.history__title {
+  font-size: 1rem;
+}
+
+.history__title:focus {
+  outline: none;
+}
+
+.history__clear {
+  padding: 0.35rem 0.8rem;
+  border: none;
+  border-radius: 999px;
+  background: var(--color-function);
+  font-size: 0.85rem;
+}
+
+.history__clear:hover {
+  background: var(--color-function-hover);
+}
+
+/* The list scrolls inside the panel; the page doesn't */
+.history__list {
+  flex: 1;
+  margin: 0;
+  padding: 0.25rem 0;
+  list-style: none;
+  overflow-y: auto;
+}
+
+.history__entry {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.15rem;
+  width: 100%;
+  padding: 0.6rem 0.5rem;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.history__entry:hover {
+  background: var(--color-key-hover);
+}
+
+.history__expression {
+  color: var(--color-muted);
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+
+.history__result {
+  font-size: 1.35rem;
+}
+
+.history__empty {
+  margin: auto;
+  color: var(--color-muted);
+}
+
 /* ===== Small phones ===== */
 @media (max-width: 360px) {
   .calculator {
@@ -281,7 +380,8 @@ body {
     transition: none;
   }
 
-  .display--answered .display__expression {
+  .display--answered .display__expression,
+  .history {
     animation: none;
   }
 }
