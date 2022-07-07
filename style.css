@@ -92,6 +92,13 @@ body {
   transition: background-color 0.2s;
 }
 
+/* The hidden attribute must always win. Without this, a class that sets
+   display (like .history's display: flex) beats it, and the "hidden"
+   History panel stays on screen covering the keypad. */
+[hidden] {
+  display: none !important;
+}
+
 /* Hidden on screen, still read by screen readers */
 .visually-hidden {
   position: absolute;
